@@ -1,67 +1,47 @@
 <?php
 require 'db.php';
 session_start();
-$message = "";
+$message = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username']);
-    $password = $_POST['password'];
+    $user = trim($_POST['username']);
+    $pass = trim($_POST['password']);
 
-    if (!empty($username) && !empty($password)) {
-        $stmt = $pdo->prepare("INSERT INTO log_events (event_type, description) VALUES ('LOGIN_ATTEMPT', ?)");
-        $stmt->execute(["Username: " . $username]);
-
+    if (!empty($user) && !empty($pass)) {
         $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
-        $stmt->execute([$username]);
-        $user = $stmt->fetch();
+        $stmt->execute([$user]);
+        $account = $stmt->fetch();
 
-        // Verify the input password against the hashed database value
-        if ($user && password_verify($password, $user['password_hash'])) {
-            // Prevent Session Fixation attacks by regenerating session ID
+        if ($account && password_verify($pass, $account['password_hash'])) {
+            // Mitigate Session Fixation attacks by regenerating session IDs
             session_regenerate_id(true);
-            
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['username'] = $user['username'];
-            
+            $_SESSION['user_id'] = $account['id'];
+            $_SESSION['username'] = $account['username'];
             header("Location: index.php");
             exit;
         } else {
-            $message = "Invalid username or password.";
+            $message = "Invalid authentication credentials.";
         }
-    } else {
-        $message = "Please enter both username and password.";
     }
 }
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Login - Expense Tracker</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f4f4; padding: 20px; }
-        .container { max-width: 400px; margin: auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-        input, button { width: 100%; margin-bottom: 15px; padding: 10px; box-sizing: border-box; }
-        button { background-color: #28a745; color: white; border: none; cursor: pointer; }
-        button:hover { background-color: #218838; }
-        .msg { margin-bottom: 15px; color: red; }
-    </style>
+    <title>Expense Tracker - Login</title>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="container">
-    <h2>User Login</h2>
-    <?php if (!empty($message)) echo "<div class='msg'>$message</div>"; ?>
-    <form action="login.php" method="POST">
-        <label>Username</label>
-        <input type="text" name="username" required>
-        
-        <label>Password</label>
-        <input type="password" name="password" required>
-        
-        <button type="submit">Login</button>
-    </form>
-    <p>Don't have an account? <a href="register.php">Register here</a></p>
-</div>
+    <div class="auth-box">
+        <h2>System Login</h2>
+        <?php if($message): ?><p class="error"><?= htmlspecialchars($message) ?></p><?php endif; ?>
+        <form method="POST">
+            <input type="text" name="username" placeholder="Username" required><br>
+            <input type="password" name="password" placeholder="Password" required><br>
+            <button type="submit">Login</button>
+        </form>
+        <p>New user? <a href="register.php">Register here</a>.</p>
+    </div>
 </body>
 </html>
