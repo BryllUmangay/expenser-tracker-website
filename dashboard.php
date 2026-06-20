@@ -1,6 +1,10 @@
 <?php 
-include 'config.php';
-if (!isset($_SESSION['user_id'])) { header("Location: login.php"); exit; }
+include 'config.php'; 
+
+if (!isset($_SESSION['user_id'])) { 
+    header("Location: ".BASE_PATH."login.php"); 
+    exit; 
+}
 
 $user_id = $_SESSION['user_id'];
 
@@ -10,7 +14,7 @@ $expenses = $conn->query("SELECT * FROM expenses WHERE user_id = $user_id ORDER 
 // Calculate TOTAL EXPENSE
 $total_result = $conn->query("SELECT SUM(amount) AS total FROM expenses WHERE user_id = $user_id");
 $total_row = $total_result->fetch_assoc();
-$total_expense = $total_row['total'] ?? 0; // if no expenses, show 0
+$total_expense = $total_row['total'] ?? 0;
 
 // Fetch UPLOADED INVOICES history
 $invoices = $conn->query("
@@ -26,67 +30,64 @@ $invoices = $conn->query("
 <html>
 <head>
     <title>Expense Tracker - Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        /* Style for total box */
-        .total-box {
-            background: #e3f2fd;
-            padding: 15px;
-            border-radius: 6px;
-            text-align: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: #0d47a1;
-            margin-bottom: 20px;
-        }
-        .section-gap {
-            margin-top: 40px;
-        }
-    </style>
+    <link rel="stylesheet" href="<?php echo BASE_PATH; ?>style.css">
 </head>
 <body>
-    <div class="container">
-        <div class="logout">
-            Welcome, <strong><?= $_SESSION['fullname'] ?></strong> | <a href="logout.php">Logout</a>
+    <!-- ✅ NO SIDEBAR ANYMORE -->
+    <div class="main-container">
+        <!-- HEADER -->
+        <div class="dash-header">
+            <div class="welcome-text">Welcome back, <strong><?= $_SESSION['fullname'] ?></strong></div>
+            <a href="<?php echo BASE_PATH; ?>logout.php" class="logout-btn">Logout</a>
         </div>
 
-        <!-- ✅ TOTAL EXPENSE DISPLAY -->
+        <!-- TOTAL EXPENSE CARD -->
         <div class="total-box">
             Total Expenses: ₱ <?= number_format($total_expense, 2) ?>
         </div>
 
-        <h2>Log Daily Expense</h2>
-        <form method="POST" action="add_expense.php">
-            <input type="date" name="expense_date" required>
-            <input type="text" name="description" placeholder="Description (e.g. Grocery, Transport)" required>
-            <input type="number" step="0.01" name="amount" placeholder="Amount (PHP)" required>
-            <select name="category" required>
-                <option value="">Select Category</option>
-                <option>Food</option>
-                <option>Transport</option>
-                <option>Utilities</option>
-                <option>Shopping</option>
-                <option>Others</option>
-            </select>
-            <button type="submit">Save Expense</button>
-        </form>
+        <!-- LOG EXPENSE CARD -->
+        <div class="card">
+            <div class="card-header">LOG DAILY EXPENSE</div>
+            <div class="form-section">
+                <form method="POST" action="<?php echo BASE_PATH; ?>add_expense.php">
+                    <input type="date" name="expense_date" required>
+                    <input type="text" name="description" placeholder="Description (e.g. Grocery, Transport)" required>
+                    <input type="number" step="0.01" name="amount" placeholder="Amount (PHP)" required>
+                    <select name="category" required>
+                        <option value="">Select Category</option>
+                        <option>Food</option>
+                        <option>Transport</option>
+                        <option>Utilities</option>
+                        <option>Shopping</option>
+                        <option>Others</option>
+                    </select>
+                    <button type="submit">Save Expense</button>
+                </form>
+            </div>
+        </div>
 
-        <h2>Upload Invoice</h2>
-        <form method="POST" action="upload_invoice.php" enctype="multipart/form-data">
-            <input type="file" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" required>
-            <select name="expense_id">
-                <option value="">Link to Expense (optional)</option>
-                <?php 
-                // Re-fetch expenses for dropdown
-                $expenses_dropdown = $conn->query("SELECT * FROM expenses WHERE user_id = $user_id ORDER BY expense_date DESC");
-                while ($row = $expenses_dropdown->fetch_assoc()): 
-                ?>
-                    <option value="<?= $row['id'] ?>"><?= $row['expense_date'] ?> - <?= $row['description'] ?> (₱<?= $row['amount'] ?>)</option>
-                <?php endwhile; ?>
-            </select>
-            <button type="submit">Upload Invoice</button>
-        </form>
+        <!-- UPLOAD INVOICE CARD -->
+        <div class="card">
+            <div class="card-header">UPLOAD INVOICE</div>
+            <div class="form-section">
+                <form method="POST" action="<?php echo BASE_PATH; ?>upload_invoice.php" enctype="multipart/form-data">
+                    <input type="file" name="invoice_file" accept=".pdf,.jpg,.jpeg,.png" required>
+                    <select name="expense_id">
+                        <option value="">Link to Expense (optional)</option>
+                        <?php 
+                        $expenses_dropdown = $conn->query("SELECT * FROM expenses WHERE user_id = $user_id ORDER BY expense_date DESC");
+                        while ($row = $expenses_dropdown->fetch_assoc()): 
+                        ?>
+                            <option value="<?= $row['id'] ?>"><?= $row['expense_date'] ?> - <?= $row['description'] ?> (₱<?= $row['amount'] ?>)</option>
+                        <?php endwhile; ?>
+                    </select>
+                    <button type="submit">Upload Invoice</button>
+                </form>
+            </div>
+        </div>
 
+        <!-- EXPENSE HISTORY -->
         <h2>Expense History</h2>
         <table>
             <tr>
@@ -96,8 +97,7 @@ $invoices = $conn->query("
                 <th>Amount (₱)</th>
             </tr>
             <?php
-            // Show all expenses
-            $expenses->data_seek(0); // reset pointer to start
+            $expenses->data_seek(0);
             while ($row = $expenses->fetch_assoc()):
             ?>
             <tr>
@@ -109,8 +109,7 @@ $invoices = $conn->query("
             <?php endwhile; ?>
         </table>
 
-
-        <!-- ✅ INVOICE UPLOAD HISTORY -->
+        <!-- INVOICE HISTORY -->
         <div class="section-gap">
             <h2>Invoice Upload History</h2>
             <table>
@@ -122,7 +121,7 @@ $invoices = $conn->query("
                 </tr>
                 <?php if ($invoices->num_rows == 0): ?>
                 <tr>
-                    <td colspan="4" style="text-align:center; color:#666;">No invoices uploaded yet.</td>
+                    <td colspan="4" style="text-align:center; color:#888;">No invoices uploaded yet.</td>
                 </tr>
                 <?php else: ?>
                 <?php while ($inv = $invoices->fetch_assoc()): ?>
@@ -139,7 +138,7 @@ $invoices = $conn->query("
                     </td>
                     <td><?= $inv['invoice_file'] ?></td>
                     <td>
-                        <a href="uploads/<?= $inv['invoice_file'] ?>" target="_blank" style="color:#1a73e8; font-weight:bold;">View / Open</a>
+                        <a href="<?php echo BASE_PATH; ?>uploads/<?= $inv['invoice_file'] ?>" target="_blank">View / Open</a>
                     </td>
                 </tr>
                 <?php endwhile; ?>

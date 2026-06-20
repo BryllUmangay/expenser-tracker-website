@@ -1,6 +1,9 @@
 <?php
-include 'config.php';
-if (!isset($_SESSION['user_id'])) { header("Location: login.php"); exit; }
+include 'config.php'; // ✅
+if (!isset($_SESSION['user_id'])) { 
+    header("Location: ".BASE_PATH."login.php"); 
+    exit; 
+}
 
 $user_id = $_SESSION['user_id'];
 $expense_date = $_POST['expense_date'];
@@ -12,7 +15,7 @@ $stmt = $conn->prepare("INSERT INTO expenses (user_id, expense_date, description
 $stmt->bind_param("issds", $user_id, $expense_date, $description, $amount, $category);
 
 if ($stmt->execute()) {
-    header("Location: dashboard.php?msg=expense_added");
+    header("Location: ".BASE_PATH."dashboard.php?msg=expense_added"); // ✅
 } else {
     echo "Error: " . $conn->error;
 }

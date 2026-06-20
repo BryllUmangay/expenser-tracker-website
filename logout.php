@@ -1,5 +1,9 @@
 <?php
+// ✅ FIRST LINE ALWAYS
 session_start();
+include 'config.php';
+
+// ✅ DESTROY SESSION & REDIRECT
 $_SESSION = array();
 if (ini_get("session.use_cookies")) {
     $params = session_get_cookie_params();
@@ -9,6 +13,6 @@ if (ini_get("session.use_cookies")) {
     );
 }
 session_destroy();
-header("Location: login.php");
+header("Location: ".BASE_PATH."login.php");
 exit;
 ?>
